@@ -1,21 +1,13 @@
-## About
 
-This is an ERC20 token project that uses [cairo 1.1.0](https://github.com/starkware-libs/cairo) . The project includes an implementation of the ERC20/[snip 2](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-2.md) standard and complete unit tests.
-
-I have written a blog post to provide a complete introduction to the development process. If you encounter any Chinese, you can refer to [this link](https://blog.wssh.trade/posts/cairo1-with-erc20/).
-
-## Usage
-
-You should install [cairo 1 toolchain](https://github.com/starkware-libs/cairo) and [scarb](https://docs.swmansion.com/scarb/download).
-
-### Test
-
-```bash
-cairo-test --starknet .
+## 编译
 ```
+scrab build 
+```
+## 部署
+```
+# 合约声明
+starkli declare --keystore ~/.starknet_accounts/key.json --account ~/.starknet_accounts/starkli.json target/dev/target/dev/helloERC20.starknet_artifacts.json 
 
-or 
-
-```bash
-scarb test
+# 合约部署
+starkli deploy --keystore ~/.starknet_accounts/key.json --account ~/.starknet_accounts/starkli.json  0x00eb1c90c377d7aafcdf7287cc4096376dbb182adf75b6ee7b01837a852d33d7  u256:1000000000000
 ```
