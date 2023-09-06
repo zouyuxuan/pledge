@@ -1,21 +1,31 @@
 use starknet::ContractAddress;
 #[derive(Copy, Drop, Serde, starknet::Store)]
     struct PledgeInfo {
+        // 区块时间
         block_time: u64,
+        // 质押数量
         pledge_amount: u256,
+        // 质押时间
         pledge_time: u64,
     }
 
 #[starknet::interface]
 trait PLEDGE<TContractState> {
+    // 获取供应总数
     fn get_total_supply(self:@TContractState)->u256;
+    // 添加白名单
     fn add_white_list(ref self: TContractState, address: ContractAddress, mount: u256) -> bool;
-    fn mint(ref self: TContractState) -> bool;
+    // 申领
+    fn claim(ref self: TContractState) -> bool;
+    // 质押token amount:数量 pledge_time:质押时间
     fn pledge_token(ref self: TContractState, address: ContractAddress, amount: u256, pledge_time: u64) -> bool;
+    // 获取token数量，申领之后的token
     fn get_token(self:@TContractState,address:ContractAddress)->u256;
+    // 获取质押账户信息
     fn get_pledge_account(self:@TContractState,address:ContractAddress)->PledgeInfo;
-
+    // 提取
     fn withdrew(ref self: TContractState,address:ContractAddress,amount:u256)->bool;
+    // 获取总质押
     fn get_total_pledge(self:@TContractState)->u256;
 // fn get_pledge_rate(self:@TContractState)->felt252
 }
@@ -26,7 +36,6 @@ mod pledge {
     use starknet::ContractAddress;
     use starknet::get_block_timestamp;
 
-    
 
     #[storage]
     struct Storage {
@@ -57,7 +66,7 @@ mod pledge {
             }
             return false;
         }
-        fn mint(ref self: ContractState) -> bool {
+        fn claim(ref self: ContractState) -> bool {
             let caller = get_caller_address();
             let amount = self.white_list.read(caller);
             if amount > 0 {
