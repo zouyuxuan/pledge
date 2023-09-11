@@ -16,7 +16,7 @@ trait PLEDGE<TContractState> {
     // 添加白名单
     fn add_white_list(ref self: TContractState, address: ContractAddress, mount: u256) -> bool;
     // 申领
-    fn claim(ref self: TContractState) -> bool;
+    fn claim(ref self: TContractState) -> u256;
     // 质押token amount:数量 pledge_time:质押时间
     fn pledge_token(ref self: TContractState, amount: u256, pledge_time: u64) -> bool;
     // 获取token数量，申领之后的token
@@ -48,10 +48,9 @@ mod pledge {
     }
     
     #[constructor]
-    fn constructor(ref self: ContractState, amount: u256) {
+    fn constructor(ref self: ContractState, address:ContractAddress,amount: u256) {
         self.total_supply.write(amount);
-        let owner = get_caller_address();
-        self._owner.write(owner)
+        self._owner.write(address)
     }
 
     #[external(v0)]
@@ -66,15 +65,16 @@ mod pledge {
             }
             return false;
         }
-        fn claim(ref self: ContractState) -> bool {
+        fn claim(ref self: ContractState) -> u256 {
             let caller = get_caller_address();
             let amount = self.white_list.read(caller);
             if amount > 0 {
-                self.total_supply.write(self.total_supply.read() + amount);
                 self.token_account.write(caller,amount);
-                return true;
+                self.total_supply.write(self.total_supply.read() + amount);
+                self.white_list.write(caller,0);
+                return amount;
             }
-            return false;
+            return amount;
         }
         fn pledge_token(
             ref self: ContractState,  amount: u256, pledge_time: u64
