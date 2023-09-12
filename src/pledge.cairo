@@ -1,3 +1,4 @@
+use core::debug::PrintTrait;
 use starknet::ContractAddress;
 #[derive(Copy, Drop, Serde, starknet::Store)]
     struct PledgeInfo {
@@ -20,9 +21,9 @@ trait PLEDGE<TContractState> {
     // 质押token amount:数量 pledge_time:质押时间
     fn pledge_token(ref self: TContractState, amount: u256, pledge_time: u64) -> bool;
     // 获取token数量，申领之后的token
-    fn get_token(self:@TContractState)->u256;
+    fn get_token_by_address(self:@TContractState,address: ContractAddress)->u256;
     // 获取质押账户信息
-    fn get_pledge_account(self:@TContractState)->PledgeInfo;
+    fn get_pledge_account_by_address(self:@TContractState,address:ContractAddress)->PledgeInfo;
     // 提取
     fn withdrew(ref self: TContractState,amount:u256)->bool;
     // 获取总质押
@@ -36,6 +37,7 @@ mod pledge {
     use starknet::ContractAddress;
     use starknet::get_block_timestamp;
 
+    use debug::PrintTrait;
 
     #[storage]
     struct Storage {
@@ -81,6 +83,7 @@ mod pledge {
         ) -> bool {
             let address = get_caller_address();
             let token_account = self.token_account.read(address);
+            assert(token_account >0 && token_account>amount,'pledge token failed');
             if token_account>0&&token_account >amount{
                 self.token_account.write(address,token_account - amount);
                 let pledge_info  = PledgeInfo{block_time:get_block_timestamp(),pledge_amount:amount,pledge_time:pledge_time};
@@ -90,25 +93,23 @@ mod pledge {
             }
             return false;
         }
-        fn get_token(self:@ContractState)->u256{
-            let address = get_caller_address();
+        fn get_token_by_address(self:@ContractState,address:ContractAddress)->u256{
             return self.token_account.read(address);
-            
         }
-        fn get_pledge_account(self:@ContractState)->PledgeInfo{
-            let address = get_caller_address();
+        fn get_pledge_account_by_address (self:@ContractState,address:ContractAddress)->PledgeInfo{
            return  self.pledge_account.read(address);
         }
         fn withdrew(ref self: ContractState, amount:u256)->bool{
             let address = get_caller_address();
             let mut pledge_info :PledgeInfo =  self.pledge_account.read(address);
             let block_time:u64 = get_block_timestamp();
-                if pledge_info.pledge_time < block_time - pledge_info.block_time&&amount <pledge_info.pledge_amount{
+            
+                if pledge_info.pledge_time < block_time - pledge_info.block_time&&amount <=pledge_info.pledge_amount{
                     self.token_account.write(address,self.token_account.read(address)+(pledge_info.pledge_amount-amount));
                     pledge_info.pledge_amount -= amount;
                     self.pledge_account.write(address,pledge_info);
                     self.total_pledge.write(self.total_pledge.read()-amount);
-
+                    block_time.print();
                     return true;
                 }
                 return false;
