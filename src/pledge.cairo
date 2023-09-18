@@ -1,4 +1,3 @@
-use core::debug::PrintTrait;
 use starknet::ContractAddress;
 use array::ArrayTrait;
 #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -36,6 +35,7 @@ trait PLEDGE<TContractState> {
     fn buy_starking(ref self: TContractState,sell_hash:felt252,sell_address:ContractAddress)->bool;
     // get total pledge
     fn get_total_pledge(self:@TContractState)->u256;
+    fn get_burn(self:@TContractState)->u256;
 
 }
 #[starknet::contract]
@@ -164,6 +164,10 @@ mod pledge {
             return true;
 
 
+        }
+        // get burn total
+        fn get_burn(self:@ContractState)->u256{
+            return self.burn_total.read();
         }
     }
 }
