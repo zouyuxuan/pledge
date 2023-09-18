@@ -33,6 +33,7 @@ trait PLEDGE<TContractState> {
     fn sell_starking(ref self: TContractState,sell_number:u256)->felt252;
     fn check_onsell_starking(self:@TContractState,sell_hash:felt252)->PledgeInfo;
     fn buy_starking(ref self: TContractState,sell_hash:felt252,sell_address:ContractAddress)->bool;
+    fn transfer_starking(ref self: TContractState,to_address:ContractAddress)->bool;
     // get total pledge
     fn get_total_pledge(self:@TContractState)->u256;
     fn get_burn(self:@TContractState)->u256;
@@ -164,6 +165,18 @@ mod pledge {
             return true;
 
 
+        }
+        fn transfer_starking(ref self: ContractState,to_address:ContractAddress)->bool{
+            let address = get_caller_address();
+            let from_hash = self.pledge_account.read(address);
+            let to_hash = self.pledge_account.read(to_address);
+
+            assert(to_hash =='','caller has not pledge ');
+            assert(to_hash !='','to_address has pledge ');
+            
+            self.pledge_account.write(address,'');
+            self.pledge_account.write(to_address,from_hash);
+            return true;
         }
         // get burn total
         fn get_burn(self:@ContractState)->u256{
