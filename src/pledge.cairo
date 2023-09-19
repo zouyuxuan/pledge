@@ -171,9 +171,9 @@ mod pledge {
             let from_hash = self.pledge_account.read(address);
             let to_hash = self.pledge_account.read(to_address);
 
-            assert(to_hash =='','caller has not pledge ');
+            assert(from_hash =='','caller has not pledge ');
             assert(to_hash !='','to_address has pledge ');
-            
+
             self.pledge_account.write(address,'');
             self.pledge_account.write(to_address,from_hash);
             return true;
