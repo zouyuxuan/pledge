@@ -10,7 +10,6 @@ use array::ArrayTrait;
         pledge_time: u64,
         on_sell:bool,
         sell_num:u256,
-        profit:u256,
         withdraw_profit:u256,
     }
 
@@ -111,7 +110,7 @@ mod pledge {
             
             self.token_account.write(address,token_account - amount);
             let block_time =get_block_timestamp();
-            let pledge_info  = PledgeInfo{block_time:block_time,pledge_amount:amount,pledge_time:pledge_time,on_sell:false,sell_num:0_u256,profit:0,withdraw_profit:0};
+            let pledge_info  = PledgeInfo{block_time:block_time,pledge_amount:amount,pledge_time:pledge_time,on_sell:false,sell_num:0_u256,withdraw_profit:0};
             let m:felt252 = block_time.into();
             let peldge_hash:felt252 = pedersen(m,address.into());
             self.pledge_account_info.write(peldge_hash,pledge_info);
@@ -135,14 +134,9 @@ mod pledge {
 
             assert(pledge_info.pledge_amount > amount,'withdraw beyond');
             assert(block_time - pledge_info.block_time > pledge_info.pledge_time ,'pledge time has not arrived' );
-            // Calculate profit
-            let profit:u256 = amount *self.pledge_rate.read().into()*pledge_info.pledge_time.into()/100;
             
             self.token_account.write(address,self.token_account.read(address)+(pledge_info.pledge_amount-amount));
             pledge_info.pledge_amount -= amount;
-            pledge_info.profit = profit;
-
-            
 
             self.pledge_account_info.write(pledge_hash,pledge_info);
             self.total_pledge.write(self.total_pledge.read()-amount);
@@ -151,12 +145,15 @@ mod pledge {
         }
 
          fn withdrew_profit(ref self: ContractState,address:ContractAddress)->u256{
-            let (profit,) = self._calculate_profit(address);
-            // spent from owner account
-            self.token_account.write(self._owner.read(),self.token_account.read(self._owner.read()) - profit);
             let hash = self.pledge_account.read(address);
             let mut pledge_info = self.pledge_account_info.read(hash);
-
+            let (profit,) = self._calculate_profit(address);
+            // spent from owner account
+            self.token_account.write(self._owner.read(),self.token_account.read(self._owner.read()) - (profit- pledge_info.withdraw_profit));
+            
+            pledge_info.withdraw_profit = profit;
+            self.pledge_account_info.write(hash,pledge_info);
+            self.token_account.write(address,profit- pledge_info.withdraw_profit);
             return profit;
             
         }
