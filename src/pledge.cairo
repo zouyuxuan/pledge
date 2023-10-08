@@ -62,6 +62,26 @@ mod pledge {
         pledge_account:LegacyMap::<ContractAddress,felt252>,
         pledge_account_info:LegacyMap::<felt252, PledgeInfo>,
     }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        TransferStarking: TransferStarking,
+        withdraw:withdraw,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct TransferStarking {
+        #[key]
+        user: ContractAddress,
+        hash: felt252
+    }
+    #[derive(Drop, starknet::Event)]
+    struct withdraw {
+        #[key]
+        user: ContractAddress,
+        amount: u256
+    }
     
     #[constructor]
     fn constructor(ref self: ContractState, address:ContractAddress,amount: u256,rate:u8) {
@@ -140,6 +160,7 @@ mod pledge {
 
             self.pledge_account_info.write(pledge_hash,pledge_info);
             self.total_pledge.write(self.total_pledge.read()-amount);
+            self.emit(withdraw { user: address, amount: amount });
             return true;
                 
         }
@@ -185,6 +206,7 @@ mod pledge {
             pledge_info.sell_num = 0_u256;
             self.pledge_account_info.write(sell_hash,pledge_info);
             self.token_account.write(sell_address,pledge_info.sell_num - 2);
+            self.emit(TransferStarking { user: sell_address, hash: sell_hash });
             return true;
 
 

@@ -4,6 +4,9 @@ version = "0.1.0"    # the current version, obeying semver
 
 [dependencies]
 starknet = ">=2.0.0-rc0"
+[lib]
+sierra = true  # Enable Sierra codegen.
+casm = false   # Enable CASM codegen.
 
 [[target.starknet-contract]]
 allowed-libfuncs = true
